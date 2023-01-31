@@ -6,45 +6,71 @@ import { getRandomWord } from './helpers/getRandomWord'
 
 function App() {
 
-  const [word] = useState(getRandomWord());
-  const [hiddenWord, setHiddenWord] = useState( '_ '.repeat(word.length));
+  const [word, setWord] = useState(getRandomWord());
+  const [hiddenWord, setHiddenWord] = useState(('_ ').repeat(word.length));
   const [attempts, setAttempts] = useState(0);
-  const [lose, setLose] = useState(false);
+  const [lose, setLose] = useState(false)
   const [won, setWon] = useState(false);
+  const [alreadyGuessedLetter, setAlreadyGuessedLetter] = useState(false);
 
-  //El jugador perdió
-  useEffect( () => {
-    if(attempts === 9){
-      setLose(true)
+  const newGame = () => {
+    const newWord = getRandomWord();
+
+    setWord(newWord);
+    setHiddenWord(('_ ').repeat(newWord.length));
+    setAttempts(0);
+    setLose(false);
+    setWon(false);
+    setAlreadyGuessedLetter(false);
+
+  }
+
+  //Determinar si el usuario perdió
+  useEffect(() => {
+    if(attempts === 9) {
+      setLose(true);
     }
   }, [attempts]); //hooks
 
-  //El jugador ganó
+
+  //Determinar si el usuario perdió
   useEffect(() => {
-    console.log(hiddenWord.split(' ').join(''));
-    if(hiddenWord.split(' ').join('') === word){
-      console.log("same")
+    if(hiddenWord.split(" ").join("") === word){
       setWon(true);
     }
-  }, [hiddenWord]);
+  }, [hiddenWord])
+
+  const incrementAttempts = () => {
+    setAttempts(Math.min(attempts + 1, 9));
+  }
 
   const checkLetter = (letter: string) => {
+    if(lose || won) return;
 
-    if(lose) return;
-    if(won) return;
-
-    if(!word.includes(letter)){
-      setAttempts(Math.min(attempts + 1, 9));
+    // Check already guessed letter
+    if(hiddenWord.includes(letter)){
+      setAlreadyGuessedLetter(true);
+      incrementAttempts();
       return;
-    }
-      const hiddenWordArray = hiddenWord.split(" ");
-      console.log(letter, "existe");
-      for(let i = 0; i < word.length; i++){
-        if (word[i] === letter){
-          hiddenWordArray[i] = letter;
-        }
+    } 
+
+    setAlreadyGuessedLetter(false);
+    console.log(alreadyGuessedLetter);
+    // end
+
+    if(!(word.includes(letter))){
+      incrementAttempts();
+      return;
+    } 
+
+    const hiddenWordArray = hiddenWord.split(" ");
+    
+    for(let i = 0; i < word.length; i++){
+      if(word[i] === letter){
+        hiddenWordArray[i] = letter;
       }
-      setHiddenWord(hiddenWordArray.join(" "))
+    }
+    setHiddenWord(hiddenWordArray.join(" "));
   }
 
   return(
@@ -53,24 +79,25 @@ function App() {
       <HangImage imageNumber={attempts}/>
 
       {/* Palabra oculta */}
-      <h3>{hiddenWord}</h3>
-
-      {/*Mensaje si perdió*/}
-      {
-        lose ? 
-        <h2 id='mensajePerder'>Usted perdió, la palabra oculta es {word}</h2> 
-        : " "
-      }
-
-      {/*Mensaje si ganó*/}
-      {
-        won ? 
-        <h2 className='mensajeGano'>Usted ganó, FELICITACIONES</h2> 
-        : " "
-      }
+      <h3>{ hiddenWord }</h3>
 
       {/* Contador de intentos */}
       <h3>Intentos: {attempts}</h3>
+
+      {/* Mensaje letra ya adivinada*/}
+      {
+        (alreadyGuessedLetter) ? <h6>You already guessed that letter, that counts as a miss</h6> : ""
+      }
+
+
+
+      {/* Mensaje de fin de juego */}
+      {
+        (lose) ? <h2 id='mensajePerder'>You lost the game, the word was {word.toUpperCase()}</h2>: ""
+      }
+      {
+        (won) ? <h2 className='mensajeGano'>You won!!!</h2> : ""
+      }
 
       {/* Botones de letras */}
       {
@@ -82,6 +109,9 @@ function App() {
           </button>
         )
       }
+
+      <br></br>
+      <button onClick={newGame}>¿Nuevo juego?</button>
     </div>
   )
 }
